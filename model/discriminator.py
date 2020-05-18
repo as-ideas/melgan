@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from model.res_stack import ResStack
+
 
 class Discriminator(nn.Module):
     def __init__(self):
@@ -10,26 +12,32 @@ class Discriminator(nn.Module):
         self.discriminator = nn.ModuleList([
             nn.Sequential(
                 nn.ReflectionPad1d(7),
-                nn.utils.weight_norm(nn.Conv1d(1, 16, kernel_size=15, stride=1)),
+                ResStack(8),
+                nn.utils.weight_norm(nn.Conv1d(8, 16, kernel_size=15, stride=1)),
                 nn.LeakyReLU(0.2, inplace=True),
             ),
             nn.Sequential(
+                ResStack(16),
                 nn.utils.weight_norm(nn.Conv1d(16, 64, kernel_size=41, stride=4, padding=20, groups=4)),
                 nn.LeakyReLU(0.2, inplace=True),
             ),
             nn.Sequential(
+                ResStack(64),
                 nn.utils.weight_norm(nn.Conv1d(64, 256, kernel_size=41, stride=4, padding=20, groups=16)),
                 nn.LeakyReLU(0.2, inplace=True),
             ),
             nn.Sequential(
+                ResStack(256),
                 nn.utils.weight_norm(nn.Conv1d(256, 1024, kernel_size=41, stride=4, padding=20, groups=64)),
                 nn.LeakyReLU(0.2, inplace=True),
             ),
             nn.Sequential(
+                ResStack(1024),
                 nn.utils.weight_norm(nn.Conv1d(1024, 1024, kernel_size=41, stride=4, padding=20, groups=256)),
                 nn.LeakyReLU(0.2, inplace=True),
             ),
             nn.Sequential(
+                ResStack(1024),
                 nn.utils.weight_norm(nn.Conv1d(1024, 1024, kernel_size=5, stride=1, padding=2)),
                 nn.LeakyReLU(0.2, inplace=True),
             ),
