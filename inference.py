@@ -12,13 +12,13 @@ MAX_WAV_VALUE = 32768.0
 
 
 def main(args):
-    checkpoint = torch.load(args.checkpoint_path)
+    checkpoint = torch.load(args.checkpoint_path, map_location=torch.device('cpu'))
     if args.config is not None:
         hp = HParam(args.config)
     else:
         hp = load_hparam_str(checkpoint['hp_str'])
 
-    model = Generator(hp.audio.n_mel_channels).cuda()
+    model = Generator(hp.audio.n_mel_channels)
     model.load_state_dict(checkpoint['model_g'])
     model.eval(inference=False)
 
@@ -27,7 +27,7 @@ def main(args):
             mel = torch.load(melpath)
             if len(mel.shape) == 2:
                 mel = mel.unsqueeze(0)
-            mel = mel.cuda()
+            mel = mel
 
             audio = model.inference(mel)
             audio = audio.cpu().detach().numpy()
