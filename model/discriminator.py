@@ -36,7 +36,6 @@ class Discriminator(nn.Module):
                 nn.LeakyReLU(0.2, inplace=True),
             ),
             nn.Sequential(
-                ResStack(1024),
                 nn.utils.weight_norm(nn.Conv1d(1024, 1024, kernel_size=5, stride=1, padding=2)),
                 nn.LeakyReLU(0.2, inplace=True),
             ),
