@@ -16,12 +16,12 @@ class ResStack(nn.Module):
                 nn.LeakyReLU(0.2),
                 nn.utils.weight_norm(nn.Conv1d(channel, channel, kernel_size=1)),
             )
-            for i in range(3)
+            for i in range(4)
         ])
 
         self.shortcuts = nn.ModuleList([
             nn.utils.weight_norm(nn.Conv1d(channel, channel, kernel_size=1))
-            for i in range(3)
+            for i in range(4)
         ])
 
     def forward(self, x):

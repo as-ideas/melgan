@@ -4,7 +4,7 @@ import tqdm
 import torch
 import argparse
 from scipy.io.wavfile import write
-
+import numpy as np
 from model.generator import Generator
 from utils.hparams import HParam, load_hparam_str
 
@@ -12,28 +12,38 @@ MAX_WAV_VALUE = 32768.0
 
 
 def main(args):
-    checkpoint = torch.load(args.checkpoint_path)
+    checkpoint = torch.load(args.checkpoint_path, map_location=torch.device('cpu'))
     if args.config is not None:
         hp = HParam(args.config)
     else:
         hp = load_hparam_str(checkpoint['hp_str'])
 
-    model = Generator(hp.audio.n_mel_channels).cuda()
+    model = Generator(hp.audio.n_mel_channels)
     model.load_state_dict(checkpoint['model_g'])
     model.eval(inference=False)
 
+    audios = []
+    input = glob.glob(os.path.join(args.input_folder, '*.mel'))
+
+    input.sort(key=lambda x: int(x.split('/')[-1].split('_')[0]))
+
     with torch.no_grad():
-        for melpath in tqdm.tqdm(glob.glob(os.path.join(args.input_folder, '*.mel'))):
+        print(input)
+        for melpath in tqdm.tqdm(input):
             mel = torch.load(melpath)
             if len(mel.shape) == 2:
                 mel = mel.unsqueeze(0)
-            mel = mel.cuda()
+            mel = mel
 
             audio = model.inference(mel)
             audio = audio.cpu().detach().numpy()
-
+            audios.append(audio)
+            audios.append(np.zeros(10000, dtype=np.int16))
             out_path = melpath.replace('.mel', '_reconstructed_epoch%04d.wav' % checkpoint['epoch'])
             write(out_path, hp.audio.sampling_rate, audio)
+
+    article = np.concatenate(audios[2:], axis=0)
+    write('/tmp/article_melgan.wav', hp.audio.sampling_rate, article)
 
 
 if __name__ == '__main__':
