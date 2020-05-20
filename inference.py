@@ -4,7 +4,7 @@ import tqdm
 import torch
 import argparse
 from scipy.io.wavfile import write
-
+import numpy as np
 from model.generator import Generator
 from utils.hparams import HParam, load_hparam_str
 
@@ -22,8 +22,15 @@ def main(args):
     model.load_state_dict(checkpoint['model_g'])
     model.eval(inference=False)
 
+    audios = []
+    input = glob.glob(os.path.join(args.input_folder, '*.mel'))
+
+    input.sort(key=lambda x: int(x.split('/')[-1].split('_')[0]))
+    input = input[2:]
+
     with torch.no_grad():
-        for melpath in tqdm.tqdm(glob.glob(os.path.join(args.input_folder, '*.mel'))):
+        print(input)
+        for melpath in tqdm.tqdm(input):
             mel = torch.load(melpath)
             if len(mel.shape) == 2:
                 mel = mel.unsqueeze(0)
@@ -31,9 +38,13 @@ def main(args):
 
             audio = model.inference(mel)
             audio = audio.cpu().detach().numpy()
-
+            audios.append(audio)
+            audios.append(np.zeros(10000, dtype=np.int16))
             out_path = melpath.replace('.mel', '_reconstructed_epoch%04d.wav' % checkpoint['epoch'])
             write(out_path, hp.audio.sampling_rate, audio)
+
+    article = np.concatenate(audios, axis=0)
+    write('/tmp/article_melgan.wav', hp.audio.sampling_rate, article)
 
 
 if __name__ == '__main__':
