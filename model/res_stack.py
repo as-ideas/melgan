@@ -5,7 +5,7 @@ import numpy as np
 
 
 class ResStack(nn.Module):
-    def __init__(self, channel):
+    def __init__(self, channel, num_layers=4):
         super(ResStack, self).__init__()
 
         self.blocks = nn.ModuleList([
@@ -16,12 +16,12 @@ class ResStack(nn.Module):
                 nn.LeakyReLU(0.2),
                 nn.utils.weight_norm(nn.Conv1d(channel, channel, kernel_size=1)),
             )
-            for i in range(4)
+            for i in range(num_layers)
         ])
 
         self.shortcuts = nn.ModuleList([
             nn.utils.weight_norm(nn.Conv1d(channel, channel, kernel_size=1))
-            for i in range(4)
+            for i in range(num_layers)
         ])
 
     def forward(self, x):
