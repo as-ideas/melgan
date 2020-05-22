@@ -12,7 +12,7 @@ class hp:
     min_level_db = -100
     ref_level_db = 20
     hop_length = 256
-    win_length = 1024
+        win_length = 1024
 
 
 def load_wav(path):
