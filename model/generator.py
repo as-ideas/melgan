@@ -66,7 +66,7 @@ class Generator(nn.Module):
         hop_length = 256
         # pad input mel with zeros to cut artifact
         # see https://github.com/seungwonpark/melgan/issues/8
-        zero = torch.full((1, self.mel_channel, 10), -1).to(mel.device)
+        zero = torch.full((1, self.mel_channel, 10), 0).to(mel.device)
         mel = torch.cat((mel, zero), dim=2)
 
         audio = self.forward(mel)
