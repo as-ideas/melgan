@@ -12,28 +12,31 @@ MAX_WAV_VALUE = 32768.0
 
 
 def main(args):
-    checkpoint = torch.load(args.checkpoint_path)
-    if args.config is not None:
-        hp = HParam(args.config)
-    else:
-        hp = load_hparam_str(checkpoint['hp_str'])
-
-    model = Generator(hp.audio.n_mel_channels).cuda()
+    model_params = {
+        'nvidia_tacotron2_LJ11_epoch6400': {
+            'mel_channel': 80,
+            'model_url': 'https://github.com/seungwonpark/melgan/releases/download/v0.3-alpha/nvidia_tacotron2_LJ11_epoch6400.pt',
+        },
+    }
+    params = model_params['nvidia_tacotron2_LJ11_epoch6400']
+    model = Generator(params['mel_channel'])
+    checkpoint = torch.hub.load_state_dict_from_url(params['model_url'], progress=True, map_location="cpu")
     model.load_state_dict(checkpoint['model_g'])
-    model.eval(inference=False)
+    model.to(torch.device('cpu'))
+    model.eval(inference=True)
+    print(model)
+    #checkpoint = torch.load(args.checkpoint_path)
+    for melpath in tqdm.tqdm(glob.glob(os.path.join(args.input_folder, '*.mel'))):
+        mel = torch.load(melpath)
+        if len(mel.shape) == 2:
+            mel = mel.unsqueeze(0)
+        mel = mel
 
-    with torch.no_grad():
-        for melpath in tqdm.tqdm(glob.glob(os.path.join(args.input_folder, '*.mel'))):
-            mel = torch.load(melpath)
-            if len(mel.shape) == 2:
-                mel = mel.unsqueeze(0)
-            mel = mel.cuda()
+        audio = model.inference(mel)
+        audio = audio.cpu().detach().numpy()
 
-            audio = model.inference(mel)
-            audio = audio.cpu().detach().numpy()
-
-            out_path = melpath.replace('.mel', '_reconstructed_epoch%04d.wav' % checkpoint['epoch'])
-            write(out_path, hp.audio.sampling_rate, audio)
+        out_path = melpath.replace('.mel', '_reconstructed_epoch%04d.wav' % checkpoint['epoch'])
+        write(out_path, 22050, audio)
 
 
 if __name__ == '__main__':
