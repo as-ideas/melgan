@@ -4,7 +4,7 @@ import tqdm
 import torch
 import argparse
 from scipy.io.wavfile import write
-
+import numpy as np
 from model.generator import Generator
 from utils.hparams import HParam, load_hparam_str
 
@@ -26,17 +26,28 @@ def main(args):
     model.eval(inference=True)
     print(model)
     #checkpoint = torch.load(args.checkpoint_path)
-    for melpath in tqdm.tqdm(glob.glob(os.path.join(args.input_folder, '*.mel'))):
-        mel = torch.load(melpath)
-        if len(mel.shape) == 2:
-            mel = mel.unsqueeze(0)
-        mel = mel
+    audios = []
+    input = glob.glob(os.path.join(args.input_folder, '*.mel'))
 
-        audio = model.inference(mel)
-        audio = audio.cpu().detach().numpy()
+    input.sort(key=lambda x: int(x.split('/')[-1].split('_')[0]))
 
-        out_path = melpath.replace('.mel', '_reconstructed_epoch%04d.wav' % checkpoint['epoch'])
-        write(out_path, 22050, audio)
+    with torch.no_grad():
+        print(input)
+        for melpath in tqdm.tqdm(input):
+            mel = torch.load(melpath)
+            if len(mel.shape) == 2:
+                mel = mel.unsqueeze(0)
+            mel = mel
+
+            audio = model.inference(mel)
+            audio = audio.cpu().detach().numpy()
+            audios.append(audio)
+            audios.append(np.zeros(10000, dtype=np.int16))
+            out_path = melpath.replace('.mel', '_reconstructed_epoch%04d.wav' % checkpoint['epoch'])
+            write(out_path, 22050, audio)
+
+    article = np.concatenate(audios[:], axis=0)
+    write('/tmp/article_melgan.wav', 22050, article)
 
 
 if __name__ == '__main__':
