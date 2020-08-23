@@ -6,6 +6,7 @@ import argparse
 from scipy.io.wavfile import write
 import numpy as np
 from model.generator import Generator
+from model.generator_jit import GeneratorJIT
 from utils.hparams import HParam, load_hparam_str
 
 MAX_WAV_VALUE = 32768.0
@@ -18,10 +19,16 @@ def main(args):
     else:
         hp = load_hparam_str(checkpoint['hp_str'])
 
-    model = Generator(hp.audio.n_mel_channels)
+    model = GeneratorJIT(hp.audio.n_mel_channels)
     model.load_state_dict(checkpoint['model_g'])
     model.eval(inference=True)
 
+    mel = torch.randn(80, 234)
+
+    traced_script_module = torch.jit.script(model, mel)
+    traced_script_module.save("/tmp/melgan_6.pt")
+
+    """
     audios = []
     input = glob.glob(os.path.join(args.input_folder, '*.mel'))
 
@@ -36,7 +43,7 @@ def main(args):
                 mel = mel.unsqueeze(0)
             mel = mel
             print(mel.shape)
-            audio = model.inference(mel)
+            audio = model.forward(mel)
             audio = audio.cpu().detach().numpy()
             audios.append(audio)
             audios.append(np.zeros(10000, dtype=np.int16))
@@ -45,7 +52,7 @@ def main(args):
 
     article = np.concatenate(audios, axis=0)
     write('/tmp/article_melgan.wav', hp.audio.sampling_rate, article)
-
+    """
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
