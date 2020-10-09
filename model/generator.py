@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from performer_pytorch import Performer
 
 from .res_stack import ResStack
 # from res_stack import ResStack
@@ -17,25 +18,27 @@ class Generator(nn.Module):
             nn.ReflectionPad1d(3),
             nn.utils.weight_norm(nn.Conv1d(mel_channel, 512, kernel_size=7, stride=1)),
 
+            #Performer(dim=512, depth=1, heads=8, causal=True),
+
             nn.LeakyReLU(0.2),
             nn.utils.weight_norm(nn.ConvTranspose1d(512, 256, kernel_size=16, stride=8, padding=4)),
 
-            ResStack(256, num_layers=4),
+            #Performer(dim=256, depth=1, heads=8, causal=True),
 
             nn.LeakyReLU(0.2),
             nn.utils.weight_norm(nn.ConvTranspose1d(256, 128, kernel_size=16, stride=8, padding=4)),
 
-            ResStack(128, num_layers=5),
+            #Performer(dim=256, depth=1, heads=8, causal=True),
 
             nn.LeakyReLU(0.2),
             nn.utils.weight_norm(nn.ConvTranspose1d(128, 64, kernel_size=4, stride=2, padding=1)),
 
-            ResStack(64, num_layers=6),
+            #Performer(dim=64, depth=1, heads=4, causal=True),
 
             nn.LeakyReLU(0.2),
             nn.utils.weight_norm(nn.ConvTranspose1d(64, 32, kernel_size=4, stride=2, padding=1)),
 
-            ResStack(32, num_layers=7),
+            #Performer(dim=32, depth=1, heads=4, causal=True),
 
             nn.LeakyReLU(0.2),
             nn.ReflectionPad1d(3),

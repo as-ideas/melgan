@@ -14,8 +14,8 @@ from .validation import validate
 
 
 def train(args, pt_dir, chkpt_path, trainloader, valloader, writer, logger, hp, hp_str):
-    model_g = Generator(hp.audio.n_mel_channels).cuda()
-    model_d = MultiScaleDiscriminator().cuda()
+    model_g = Generator(hp.audio.n_mel_channels)
+    model_d = MultiScaleDiscriminator()
 
     optim_g = torch.optim.Adam(model_g.parameters(),
         lr=hp.train.adam.lr, betas=(hp.train.adam.beta1, hp.train.adam.beta2))
@@ -62,10 +62,10 @@ def train(args, pt_dir, chkpt_path, trainloader, valloader, writer, logger, hp, 
             trainloader.dataset.shuffle_mapping()
             loader = tqdm.tqdm(trainloader, desc='Loading train data')
             for (melG, audioG), (melD, audioD) in loader:
-                melG = melG.cuda()
-                audioG = audioG.cuda()
-                melD = melD.cuda()
-                audioD = audioD.cuda()
+                melG = melG
+                audioG = audioG
+                melD = melD
+                audioD = audioD
 
                 # generator
                 optim_g.zero_grad()

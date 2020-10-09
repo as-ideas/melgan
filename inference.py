@@ -24,9 +24,10 @@ def main(args):
 
     audios = []
     input = glob.glob(os.path.join(args.input_folder, '*.mel'))
-
-    input.sort(key=lambda x: int(x.split('/')[-1].split('_')[0]))
-    input = input[2:]
+    input.sort()
+    print(input)
+    #input.sort(key=lambda x: int(x.split('/')[-1].split('_')[0]))
+    #input = input[2:]
 
     with torch.no_grad():
         print(input)
