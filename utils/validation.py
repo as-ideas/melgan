@@ -11,8 +11,8 @@ def validate(hp, args, generator, discriminator, valloader, writer, step):
     loss_g_sum = 0.0
     loss_d_sum = 0.0
     for mel, audio in loader:
-        mel = mel
-        audio = audio
+        mel = mel.cuda()
+        audio = audio.cuda()
 
         # generator
         fake_audio = generator(mel)
