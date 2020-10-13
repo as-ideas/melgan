@@ -37,21 +37,23 @@ class Generator(nn.Module):
             nn.utils.weight_norm(nn.ConvTranspose1d(512, 256, kernel_size=16, stride=8, padding=4)),
 
             PerformerStack(dim=256),
+            ResStack(256),
 
             nn.LeakyReLU(0.2),
             nn.utils.weight_norm(nn.ConvTranspose1d(256, 128, kernel_size=16, stride=8, padding=4)),
 
             PerformerStack(dim=128),
+            ResStack(128),
 
             nn.LeakyReLU(0.2),
             nn.utils.weight_norm(nn.ConvTranspose1d(128, 64, kernel_size=4, stride=2, padding=1)),
 
-            PerformerStack(dim=64),
+            ResStack(64),
 
             nn.LeakyReLU(0.2),
             nn.utils.weight_norm(nn.ConvTranspose1d(64, 32, kernel_size=4, stride=2, padding=1)),
 
-            PerformerStack(dim=32),
+            ResStack(32),
 
             nn.LeakyReLU(0.2),
             nn.ReflectionPad1d(3),
