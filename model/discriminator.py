@@ -1,7 +1,20 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from performer_pytorch import Performer
 
+
+class PerformerT(nn.Module):
+
+    def __init__(self, dim, layers, heads):
+        super().__init__()
+        self.perf = Performer(dim, layers, heads)
+
+    def forward(self, x):
+        x = x.transpose(1, 2)
+        x = self.perf(x)
+        x = x.transpose(1, 2)
+        return x
 
 class Discriminator(nn.Module):
     def __init__(self):
@@ -24,16 +37,19 @@ class Discriminator(nn.Module):
             nn.Sequential(
                 nn.utils.weight_norm(nn.Conv1d(256, 1024, kernel_size=41, stride=4, padding=20, groups=64)),
                 nn.LeakyReLU(0.2, inplace=True),
+                PerformerT(1024, 4, 8),
             ),
             nn.Sequential(
                 nn.utils.weight_norm(nn.Conv1d(1024, 1024, kernel_size=41, stride=4, padding=20, groups=256)),
                 nn.LeakyReLU(0.2, inplace=True),
+                PerformerT(1024, 4, 8),
             ),
             nn.Sequential(
                 nn.utils.weight_norm(nn.Conv1d(1024, 1024, kernel_size=5, stride=1, padding=2)),
                 nn.LeakyReLU(0.2, inplace=True),
+                PerformerT(1024, 4, 8),
             ),
-            nn.utils.weight_norm(nn.Conv1d(1024, 1, kernel_size=3, stride=1, padding=1)),
+            PerformerT(1024, 4, 8),
         ])
 
     def forward(self, x):
