@@ -65,14 +65,6 @@ class Discriminator(nn.Module):
         ])
 
         self.discriminator_2 = nn.ModuleList([
-            nn.Sequential(
-                nn.utils.weight_norm(nn.Conv1d(1024, 1024, kernel_size=41, stride=4, padding=20, groups=256)),
-                nn.LeakyReLU(0.2, inplace=True),
-            ),
-            nn.Sequential(
-                nn.utils.weight_norm(nn.Conv1d(1024, 1024, kernel_size=5, stride=1, padding=2)),
-                nn.LeakyReLU(0.2, inplace=True),
-            ),
             nn.utils.weight_norm(nn.Conv1d(1024, 1, kernel_size=3, stride=1, padding=1)),
         ])
 
