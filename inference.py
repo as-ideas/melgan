@@ -12,24 +12,21 @@ MAX_WAV_VALUE = 32768.0
 
 
 def main(args):
-    model_params = {
-        'nvidia_tacotron2_LJ11_epoch6400': {
-            'mel_channel': 80,
-            'model_url': 'https://github.com/seungwonpark/melgan/releases/download/v0.3-alpha/nvidia_tacotron2_LJ11_epoch6400.pt',
-        },
-    }
-    params = model_params['nvidia_tacotron2_LJ11_epoch6400']
-    model = Generator(params['mel_channel'])
-    checkpoint = torch.hub.load_state_dict_from_url(params['model_url'], progress=True, map_location="cpu")
+    checkpoint = torch.load(args.checkpoint_path, map_location=torch.device('cpu'))
+    if args.config is not None:
+        hp = HParam(args.config)
+    else:
+        hp = load_hparam_str(checkpoint['hp_str'])
+
+    model = Generator(hp.audio.n_mel_channels)
     model.load_state_dict(checkpoint['model_g'])
-    model.to(torch.device('cpu'))
-    model.eval(inference=True)
-    print(model)
-    #checkpoint = torch.load(args.checkpoint_path)
+    model.eval(inference=False)
+
     audios = []
     input = glob.glob(os.path.join(args.input_folder, '*.mel'))
 
     input.sort(key=lambda x: int(x.split('/')[-1].split('_')[0]))
+    #input = input[2:]
 
     with torch.no_grad():
         print(input)
@@ -44,10 +41,10 @@ def main(args):
             audios.append(audio)
             audios.append(np.zeros(10000, dtype=np.int16))
             out_path = melpath.replace('.mel', '_reconstructed_epoch%04d.wav' % checkpoint['epoch'])
-            write(out_path, 22050, audio)
+            write(out_path, hp.audio.sampling_rate, audio)
 
-    article = np.concatenate(audios[:], axis=0)
-    write('/tmp/article_melgan.wav', 22050, article)
+    article = np.concatenate(audios, axis=0)
+    write('/tmp/article_melgan.wav', hp.audio.sampling_rate, article)
 
 
 if __name__ == '__main__':
