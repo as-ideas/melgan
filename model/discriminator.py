@@ -43,6 +43,7 @@ class Discriminator(nn.Module):
         self.transformer = nn.TransformerEncoder(encoder_layer=encoder_layer,
                                                  num_layers=layers,
                                                  norm=encoder_norm)
+        self.lrelu = nn.LeakyReLU(0.2, inplace=True)
 
         self.discriminator_1 = nn.ModuleList([
             nn.Sequential(
@@ -83,6 +84,7 @@ class Discriminator(nn.Module):
         x = x.transpose(1, 2)
         x = self.pos_encoder(x)
         x = self.transformer(x)
+        x = self.lrelu(x)
         x = x.transpose(1, 2)
         features.append(x)
         for module in self.discriminator_2:
