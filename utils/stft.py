@@ -91,8 +91,8 @@ class STFT(torch.nn.Module):
 
         # https://github.com/NVIDIA/tacotron2/issues/125
         forward_transform = F.conv1d(
-            input_data.cuda(),
-            Variable(self.forward_basis, requires_grad=False).cuda(),
+            input_data,
+            Variable(self.forward_basis, requires_grad=False),
             stride=self.hop_length,
             padding=0).cpu()
 

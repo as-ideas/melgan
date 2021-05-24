@@ -14,8 +14,8 @@ from .validation import validate
 
 
 def train(args, pt_dir, chkpt_path, trainloader, valloader, writer, logger, hp, hp_str):
-    model_g = Generator(hp.audio.n_mel_channels).cuda()
-    model_d = MultiScaleDiscriminator().cuda()
+    model_g = Generator(hp.audio.n_mel_channels).to(torch.device('cuda'))
+    model_d = MultiScaleDiscriminator().to(torch.device('cuda'))
 
     optim_g = torch.optim.Adam(model_g.parameters(),
         lr=hp.train.adam.lr, betas=(hp.train.adam.beta1, hp.train.adam.beta2))
@@ -62,16 +62,18 @@ def train(args, pt_dir, chkpt_path, trainloader, valloader, writer, logger, hp, 
             trainloader.dataset.shuffle_mapping()
             loader = tqdm.tqdm(trainloader, desc='Loading train data')
             for (melG, audioG), (melD, audioD) in loader:
-                melG = melG.cuda()
-                audioG = audioG.cuda()
-                melD = melD.cuda()
-                audioD = audioD.cuda()
+                melG = melG.to(torch.device('cuda'))
+                audioG = audioG.to(torch.device('cuda'))
+                melD = melD.to(torch.device('cuda'))
+                audioD = audioD.to(torch.device('cuda'))
+
+                mel_expanded = melD.detach().repeat_interleave(256, dim=-1)[:, :, :hp.audio.segment_length]
 
                 # generator
                 optim_g.zero_grad()
                 fake_audio = model_g(melG)[:, :, :hp.audio.segment_length]
-                disc_fake = model_d(fake_audio)
-                disc_real = model_d(audioG)
+                disc_fake = model_d(fake_audio, mel_expanded)
+                disc_real = model_d(audioG, mel_expanded)
                 loss_g = 0.0
                 for (feats_fake, score_fake), (feats_real, _) in zip(disc_fake, disc_real):
                     loss_g += torch.mean(torch.sum(torch.pow(score_fake - 1.0, 2), dim=[1, 2]))
@@ -87,8 +89,8 @@ def train(args, pt_dir, chkpt_path, trainloader, valloader, writer, logger, hp, 
                 loss_d_sum = 0.0
                 for _ in range(hp.train.rep_discriminator):
                     optim_d.zero_grad()
-                    disc_fake = model_d(fake_audio)
-                    disc_real = model_d(audioD)
+                    disc_fake = model_d(fake_audio, mel_expanded)
+                    disc_real = model_d(audioD, mel_expanded)
                     loss_d = 0.0
                     for (_, score_fake), (_, score_real) in zip(disc_fake, disc_real):
                         loss_d += torch.mean(torch.sum(torch.pow(score_real - 1.0, 2), dim=[1, 2]))

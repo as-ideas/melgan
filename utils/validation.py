@@ -11,13 +11,13 @@ def validate(hp, args, generator, discriminator, valloader, writer, step):
     loss_g_sum = 0.0
     loss_d_sum = 0.0
     for mel, audio in loader:
-        mel = mel.cuda()
-        audio = audio.cuda()
-
+        mel = mel.to(torch.device('cuda'))
+        audio = audio.to(torch.device('cuda'))
+        mel_expanded = mel.repeat_interleave(256, dim=-1)
         # generator
         fake_audio = generator(mel)
-        disc_fake = discriminator(fake_audio[:, :, :audio.size(2)])
-        disc_real = discriminator(audio)
+        disc_fake = discriminator(fake_audio[:, :, :audio.size(2)], mel_expanded[:, :, :audio.size(2)])
+        disc_real = discriminator(audio, mel_expanded[:, :, :audio.size(2)])
         loss_g = 0.0
         loss_d = 0.0
         for (feats_fake, score_fake), (feats_real, score_real) in zip(disc_fake, disc_real):

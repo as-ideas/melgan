@@ -19,11 +19,12 @@ class MultiScaleDiscriminator(nn.Module):
             [nn.AvgPool1d(kernel_size=4, stride=2, padding=1, count_include_pad=False) for _ in range(1, 3)]
         )
 
-    def forward(self, x):
+    def forward(self, x, mel):
         ret = list()
 
         for pool, disc in zip(self.pooling, self.discriminators):
             x = pool(x)
-            ret.append(disc(x))
+            mel = pool(mel)
+            ret.append(disc(x, mel))
 
         return ret # [(feat, score), (feat, score), (feat, score)]
