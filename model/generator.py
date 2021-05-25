@@ -78,6 +78,24 @@ class Generator(nn.Module):
 
         return audio
 
+    def gta(self, mel):
+        mel = (mel + 5.0) / 5.0 # roughly normalize spectrogram
+        x = self.generator[0](mel)
+        x = self.generator[1](x)
+        x = self.generator[2](x)
+        return x
+
+    def gen_from_gta(self, x):
+        hop_length = 256
+        modules = self.generator[3:]
+        for m in modules:
+            x = m(x)
+        audio = x.squeeze()  # collapse all dimension except time axis
+        audio = audio[:-(hop_length * 10)]
+        audio = MAX_WAV_VALUE * audio
+        audio = audio.clamp(min=-MAX_WAV_VALUE, max=MAX_WAV_VALUE - 1)
+        audio = audio.short()
+        return audio
 
 '''
     to run this, fix 
@@ -91,9 +109,9 @@ if __name__ == '__main__':
     x = torch.randn(3, 80, 10)
     print(x.shape)
 
-    y = model(x)
+    y = model.gta(x)
     print(y.shape)
-    assert y.shape == torch.Size([3, 1, 2560])
+    #assert y.shape == torch.Size([3, 1, 2560])
 
     pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(pytorch_total_params)
