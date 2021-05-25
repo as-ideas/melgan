@@ -10,11 +10,11 @@ class Discriminator(nn.Module):
         self.discriminator = nn.ModuleList([
             nn.Sequential(
                 nn.ReflectionPad1d(7),
-                nn.utils.weight_norm(nn.Conv1d(81, 64, kernel_size=15, stride=1)),
+                nn.utils.weight_norm(nn.Conv1d(81, 32, kernel_size=15, stride=1)),
                 nn.LeakyReLU(0.2, inplace=True),
             ),
             nn.Sequential(
-                nn.utils.weight_norm(nn.Conv1d(64, 64, kernel_size=41, stride=4, padding=20, groups=4)),
+                nn.utils.weight_norm(nn.Conv1d(32, 64, kernel_size=41, stride=4, padding=20, groups=4)),
                 nn.LeakyReLU(0.2, inplace=True),
             ),
             nn.Sequential(
