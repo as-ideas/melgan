@@ -25,7 +25,15 @@ class Discriminator(nn.Module):
                 nn.utils.weight_norm(nn.Conv1d(1, 16, kernel_size=15, stride=1)),
                 nn.LeakyReLU(0.2, inplace=True),
             ),
-            RNN(16, 512),
+            nn.Sequential(
+                nn.utils.weight_norm(nn.Conv1d(16, 64, kernel_size=41, stride=4, padding=20, groups=4)),
+                nn.LeakyReLU(0.2, inplace=True),
+            ),
+            nn.Sequential(
+                nn.utils.weight_norm(nn.Conv1d(64, 256, kernel_size=41, stride=4, padding=20, groups=16)),
+                nn.LeakyReLU(0.2, inplace=True),
+            ),
+            RNN(256, 512),
             nn.utils.weight_norm(nn.Conv1d(1024, 1, kernel_size=3, stride=1, padding=1)),
         ])
 
