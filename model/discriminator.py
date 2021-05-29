@@ -10,6 +10,7 @@ class RNN(nn.Module):
         self.lstm = nn.GRU(in_dim, rnn_dim, bidirectional=True)
 
     def forward(self, x):
+        self.train(True)
         x = x.transpose(1, 2)
         x, _ = self.lstm(x)
         x = x.transpose(1, 2)
