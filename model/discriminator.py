@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from utils.stft import STFT
+
 
 class Discriminator(nn.Module):
     def __init__(self):
@@ -49,10 +51,49 @@ class Discriminator(nn.Module):
         return features[:-1], features[-1]
 
 
-if __name__ == '__main__':
-    model = Discriminator()
+class STFT2(nn.Module):
 
-    x = torch.randn(3, 1, 22050)
+    def __init__(self, filter_length=1024, hop_length=512, win_length=1024):
+        super().__init__()
+        self.stft = STFT(filter_length=filter_length, hop_length=hop_length, win_length=win_length)
+
+    def forward(self, x):
+        x, _ = self.stft.transform(x.squeeze(1))
+        print(x.size())
+        return x
+
+
+class STFTDiscriminator(nn.Module):
+
+    def __init__(self, filter_length=1024, hop_length=256, win_length=1024):
+        super(STFTDiscriminator, self).__init__()
+        self.discriminator = nn.ModuleList([
+            STFT2(filter_length=filter_length, hop_length=hop_length, win_length=win_length),
+            nn.Sequential(
+                nn.utils.weight_norm(nn.Conv1d(513, 513, kernel_size=5, stride=1, padding=2)),
+                nn.LeakyReLU(0.2, inplace=True),
+            ),
+            nn.utils.weight_norm(nn.Conv1d(513, 1, kernel_size=3, stride=1, padding=1)),
+        ])
+
+    def forward(self, x):
+        '''
+            returns: (list of 6 features, discriminator score)
+            we directly predict score without last sigmoid function
+            since we're using Least Squares GAN (https://arxiv.org/abs/1611.04076)
+        '''
+        features = list()
+        for module in self.discriminator:
+            x = module(x)
+            features.append(x)
+        return features[:-1], features[-1]
+
+
+
+if __name__ == '__main__':
+    model = STFTDiscriminator()
+
+    x = torch.randn(3, 1, 16000)
     print(x.shape)
 
     features, score = model(x)
