@@ -44,7 +44,7 @@ class Generator(nn.Module):
         )
 
     def forward(self, mel):
-        mel = (mel + 5.0) / 5.0 # roughly normalize spectrogram
+        #mel = (mel + 5.0) / 5.0 # roughly normalize spectrogram
         return self.generator(mel)
 
     def eval(self, inference=False):

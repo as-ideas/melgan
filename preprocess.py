@@ -1,10 +1,12 @@
 import os
 import glob
+import pickle
+
 import tqdm
 import torch
 import argparse
 import numpy as np
-
+from sklearn.preprocessing import StandardScaler
 from utils.stft import TacotronSTFT
 from utils.hparams import HParam
 from utils.utils import read_wav_np
@@ -21,6 +23,9 @@ def main(hp, args):
 
     wav_files = glob.glob(os.path.join(args.data_path, '**', '*.wav'), recursive=True)
 
+    mels = []
+    scaler = StandardScaler()
+
     for wavpath in tqdm.tqdm(wav_files, desc='preprocess wav to mel'):
         sr, wav = read_wav_np(wavpath)
         assert sr == hp.audio.sampling_rate, \
@@ -33,8 +38,21 @@ def main(hp, args):
 
         wav = torch.from_numpy(wav).unsqueeze(0)
         mel = stft.mel_spectrogram(wav)
-
         melpath = wavpath.replace('.wav', '.mel')
+        mels.append((mel, melpath))
+
+    mels_np = [m.cpu().numpy() for m, _ in mels]
+    scaler.fit(mels_np)
+    print(f'mean: {scaler.mean_} var: {scaler.var_}')
+    sil = scaler.transform(np.zeros((1)))
+    print(f'silence: {sil}')
+
+    with open('scaler.pkl', 'wb') as f:
+        pickle.dump(scaler, f)
+
+    for mel, melpath in mels:
+        mel = scaler.transform(mel.cpu().numpy())
+        mel = torch.tensor(mel).float()
         torch.save(mel, melpath)
 
 
